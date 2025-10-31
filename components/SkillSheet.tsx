@@ -44,7 +44,7 @@ export function SkillSheet({
                   </td>
                 </tr>
                 <tr>
-                  <td className="border border-black bg-gray-100 px-2 py-1 font-bold">
+                  <td className="w-[70px] border border-black bg-gray-100 px-2 py-1 font-bold">
                     名前
                   </td>
                   <td className="border-b border-black px-2 py-1">
@@ -68,11 +68,7 @@ export function SkillSheet({
                     スキル
                   </td>
                   <td className="border border-black px-2 py-1" colSpan={5}>
-                    <div className="flex flex-wrap gap-1">
-                      {skills.map(({ id, name }) => (
-                        <span key={id}>{name}</span>
-                      ))}
-                    </div>
+                    {skills.map(({ name }) => name).join(', ')}
                   </td>
                 </tr>
                 <tr>
@@ -123,9 +119,7 @@ export function SkillSheet({
                   スキル
                 </div>
                 <div className="flex flex-1 flex-wrap gap-1 px-2 py-1">
-                  {skills.map(({ id, name }) => (
-                    <span key={id}>{name}</span>
-                  ))}
+                  {skills.map(({ name }) => name).join(', ')}
                 </div>
               </div>
               <div>
@@ -181,9 +175,7 @@ export function SkillSheet({
                           className="border border-black px-2 py-1"
                         >
                           <div className="flex flex-wrap gap-1">
-                            {p.skills.map((s) => (
-                              <span key={s.id}>{s.name}</span>
-                            ))}
+                            {p.skills.map(({ name }) => name).join(', ')}
                           </div>
                         </td>
                       </tr>

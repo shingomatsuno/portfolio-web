@@ -140,7 +140,7 @@ export const PortfolioPage = async ({ username }: { username: string }) => {
               {pr && (
                 <div className="mt-4">
                   <div className="text-sm font-bold">自己PR</div>
-                  <p className="text-lg text-slate-600 dark:text-slate-400">
+                  <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">
                     {pr.pr_text}
                   </p>
                 </div>
