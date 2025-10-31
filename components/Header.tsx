@@ -7,7 +7,7 @@ export default function Header({ profile }: { profile: Profile }) {
   const navItems = ['About', 'Skills', 'Projects', 'Contact'];
 
   return (
-    <nav className="fixed top-0 z-50 w-full bg-transparent">
+    <nav className="fixed top-0 z-50 w-full bg-[#ffffffe6]">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link
           href="/"
