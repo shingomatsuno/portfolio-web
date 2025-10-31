@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useFetch } from '@/lib/fetch.client';
 import { UserFreeText } from '@/types/user';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import MDEditor from '@uiw/react-md-editor';
 
@@ -21,11 +21,12 @@ export default function PrEditPage() {
   const { data: userFreeText, isLoading } = useFetch<UserFreeText>(
     '/api/admin/userFreeText',
   );
-
+  const initialized = useRef(false);
   const {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<FtFormData>({
     resolver: zodResolver(ftSchema),
@@ -34,10 +35,11 @@ export default function PrEditPage() {
   const value = watch('free_text');
 
   useEffect(() => {
-    if (userFreeText) {
-      setValue('free_text', userFreeText.free_text);
+    if (userFreeText && !initialized.current) {
+      reset({ free_text: userFreeText.free_text });
+      initialized.current = true;
     }
-  }, [setValue, userFreeText]);
+  }, [reset, userFreeText]);
 
   const onSubmit: SubmitHandler<FtFormData> = async (data) => {
     try {

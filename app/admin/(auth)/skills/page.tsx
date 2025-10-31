@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { Skill } from '@/types/master';
@@ -8,6 +8,7 @@ import { useFetch } from '@/lib/fetch.client';
 import { MypageContainer } from '@/components/MypageContainer';
 
 import { SkillSelector } from '@/components/SkillSelector';
+import { Label } from '@/components/ui/label';
 
 export default function SkillsEditPage() {
   const { data: userSkills, isLoading: isLoadingUserSkills } = useFetch<
@@ -15,10 +16,12 @@ export default function SkillsEditPage() {
   >('/api/admin/userSkills');
 
   const [selectedSkills, setSelectedSkills] = useState<Skill[]>([]);
+  const initialized = useRef(false);
 
   useEffect(() => {
-    if (userSkills) {
+    if (userSkills && !initialized.current) {
       setSelectedSkills(userSkills);
+      initialized.current = true;
     }
   }, [userSkills]);
 
@@ -54,7 +57,8 @@ export default function SkillsEditPage() {
 
   return (
     <MypageContainer loading={isLoadingUserSkills} title="スキル編集">
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-2xl space-y-2">
+        <Label htmlFor="skills">スキル</Label>
         <SkillSelector
           selectedSkills={selectedSkills}
           onSort={setSelectedSkills}

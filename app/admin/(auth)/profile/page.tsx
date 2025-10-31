@@ -29,16 +29,13 @@ import { useFetch } from '@/lib/fetch.client';
 import { MypageContainer } from '@/components/MypageContainer';
 
 const profileSchema = z.object({
-  name: z.string().min(1, '名前は必須です'),
-  avatar: z
-    .string()
-    .url('有効なURLを入力してください')
-    .optional()
-    .or(z.literal('')),
-  birthday: z.string().optional(),
-  bio: z.string().max(1000, '1000文字以内で入力してください').optional(),
-  github_url: z.string().url().optional().or(z.literal('')),
-  email: z.string().email().optional().or(z.literal('')),
+  profile: z.object({
+    name: z.string().min(1, '名前は必須です'),
+    birthday: z.string().optional(),
+    bio: z.string().max(1000, '1000文字以内で入力してください').optional(),
+    github_url: z.string().url().optional().or(z.literal('')),
+    email: z.string().email().optional().or(z.literal('')),
+  }),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -46,36 +43,41 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 export default function ProfileEditPage() {
   const { data: profile, isLoading } = useFetch<Profile>('/api/admin/profile');
 
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [croppedAvatarBlob, setCroppedAvatarBlob] = useState<Blob | null>(null);
   const [imgSrc, setImgSrc] = useState('');
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isCropping, setIsCropping] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-
+  const initialized = useRef(false);
   const {
     register,
     handleSubmit,
     setValue,
+    reset,
+    watch,
     formState: { errors },
-  } = useForm<ProfileFormData>({
+  } = useForm<ProfileFormData & { profile: { avatarpreview: string | null } }>({
     resolver: zodResolver(profileSchema),
   });
 
   useEffect(() => {
-    if (profile) {
-      setValue('name', profile.name);
-      setValue('avatar', profile.avatar_url || '');
-      setValue('birthday', profile.birthday || '');
-      setValue('bio', profile.bio || '');
-      setValue('github_url', profile.github_url || '');
-      setValue('email', profile.email || '');
-      if (profile.avatar_url) {
-        setAvatarPreview(profile.avatar_url);
-      }
+    if (profile && !initialized.current) {
+      reset({
+        profile: {
+          name: profile.name,
+          bio: profile.bio || '',
+          birthday: profile.birthday || '',
+          email: profile.email || '',
+          github_url: profile.github_url || '',
+          avatarpreview: profile.avatar_url || null,
+        },
+      });
+      initialized.current = true;
     }
-  }, [profile, setValue]);
+  }, [profile, reset]);
+
+  const avatarPreview = watch('profile.avatarpreview');
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -136,7 +138,7 @@ export default function ProfileEditPage() {
       const blob = await getCroppedImg();
       if (blob) {
         setCroppedAvatarBlob(blob);
-        setAvatarPreview(URL.createObjectURL(blob));
+        setValue('profile.avatarpreview', URL.createObjectURL(blob));
       }
     }
     setIsCropping(false);
@@ -145,11 +147,11 @@ export default function ProfileEditPage() {
   const onSubmit: SubmitHandler<ProfileFormData> = async (data) => {
     try {
       const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('birthday', data.birthday || '');
-      formData.append('bio', data.bio || '');
-      formData.append('github_url', data.github_url || '');
-      formData.append('email', data.email || '');
+      formData.append('name', data.profile.name);
+      formData.append('birthday', data.profile.birthday || '');
+      formData.append('bio', data.profile.bio || '');
+      formData.append('github_url', data.profile.github_url || '');
+      formData.append('email', data.profile.email || '');
       if (croppedAvatarBlob) {
         formData.append('avatar', croppedAvatarBlob, 'avatar.jpg');
       }
@@ -262,38 +264,51 @@ export default function ProfileEditPage() {
 
             <div className="space-y-2">
               <Label htmlFor="name">名前</Label>
-              <Input id="name" {...register('name')} />
-              {errors.name && (
-                <p className="text-xs text-red-500">{errors.name.message}</p>
+              <Input id="name" {...register('profile.name')} />
+              {errors.profile?.name && (
+                <p className="text-xs text-red-500">
+                  {errors.profile?.name.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="birthday">誕生日</Label>
-              <Input id="birthday" type="date" {...register('birthday')} />
+              <Input
+                id="birthday"
+                type="date"
+                {...register('profile.birthday')}
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="github_url">Github</Label>
-              <Input id="github_url" {...register('github_url')} />
-              {errors.github_url && (
+              <Input id="github_url" {...register('profile.github_url')} />
+              {errors.profile?.github_url && (
                 <p className="text-xs text-red-500">
-                  {errors.github_url.message}
+                  {errors.profile?.github_url.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">メールアドレス</Label>
-              <Input id="email" {...register('email')} />
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email.message}</p>
+              <Input id="email" {...register('profile.email')} />
+              {errors.profile?.email && (
+                <p className="text-xs text-red-500">
+                  {errors.profile?.email.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="bio">自己紹介</Label>
-              <Textarea id="bio" rows={5} {...register('bio')} />
+              <Textarea id="bio" rows={5} {...register('profile.bio')} />
+              {errors.profile?.bio && (
+                <p className="text-xs text-red-500">
+                  {errors.profile?.bio.message}
+                </p>
+              )}
             </div>
             <div className="text-right">
               <Button type="submit">更新</Button>

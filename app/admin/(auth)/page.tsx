@@ -11,61 +11,28 @@ import {
   FileText,
   ExternalLink,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Skill } from '@/types/master';
 import { MypageContainer } from '@/components/MypageContainer';
 import { UserPr, UserProject, Profile, UserFreeText } from '@/types/user';
 import { SkillChip } from '@/components/SkillChip';
 import MDEditor from '@uiw/react-md-editor';
 import { dateFormat } from '@/lib/utils';
+import { useFetch } from '@/lib/fetch.client';
 
 export default function AdminPage() {
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<Profile>();
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [pr, setPr] = useState<UserPr>();
-  const [freeText, setFreeText] = useState<UserFreeText>();
-  const [projects, setProjects] = useState<
+  const { data: profile, isLoading: profileLoading } =
+    useFetch<Profile>('/api/admin/profile');
+  const { data: skills, isLoading: skillsLoading } = useFetch<Skill[]>(
+    '/api/admin/userSkills',
+  );
+  const { data: pr, isLoading: prLoading } =
+    useFetch<UserPr>('/api/admin/userPr');
+  const { data: freeText, isLoading: ftLoading } = useFetch<UserFreeText>(
+    '/api/admin/userFreeText',
+  );
+  const { data: projects, isLoading: projectsLoading } = useFetch<
     (Omit<UserProject, 'sills'> & { skills: Skill[] })[]
-  >([]);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const [
-          profResponse,
-          skillsResponse,
-          projctsResponse,
-          prResponse,
-          ftResponse,
-        ] = await Promise.all([
-          fetch('/api/admin/profile'),
-          fetch('/api/admin/userSkills'),
-          fetch('/api/admin/userProjects'),
-          fetch('/api/admin/userPr'),
-          fetch('/api/admin/userFreeText'),
-        ]);
-
-        const _profile = await profResponse.json();
-        const _skills = await skillsResponse.json();
-        const _projects = await projctsResponse.json();
-        const _pr = await prResponse.json();
-        const _ft = await ftResponse.json();
-
-        setProfile(_profile);
-        setSkills(_skills);
-        setProjects(_projects);
-        setPr(_pr);
-        setFreeText(_ft);
-      } catch (e) {
-        //
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
+  >('/api/admin/userProjects');
 
   const handleLogout = async () => {
     const response = await fetch('/api/admin/logout', {
@@ -81,7 +48,16 @@ export default function AdminPage() {
 
   return (
     <>
-      <MypageContainer loading={loading} title="マイページ">
+      <MypageContainer
+        loading={
+          profileLoading ||
+          skillsLoading ||
+          ftLoading ||
+          prLoading ||
+          projectsLoading
+        }
+        title="マイページ"
+      >
         <div className="-mt-5 flex justify-between">
           <Link
             href={`/user/${profile?.username}/skillsheet`}

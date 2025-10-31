@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useFetch } from '@/lib/fetch.client';
 import { UserPr } from '@/types/user';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import * as z from 'zod';
 const prSchema = z.object({
@@ -17,21 +17,22 @@ type PrFormData = z.infer<typeof prSchema>;
 
 export default function PrEditPage() {
   const { data: userPr, isLoading } = useFetch<UserPr>('/api/admin/userPr');
-
+  const initialized = useRef(false);
   const {
     register,
     handleSubmit,
-    setValue,
+    reset,
     formState: { errors },
   } = useForm<PrFormData>({
     resolver: zodResolver(prSchema),
   });
 
   useEffect(() => {
-    if (userPr) {
-      setValue('pr_text', userPr.pr_text);
+    if (userPr && !initialized.current) {
+      reset({ pr_text: userPr.pr_text });
+      initialized.current = true;
     }
-  }, [setValue, userPr]);
+  }, [reset, userPr]);
 
   const onSubmit: SubmitHandler<PrFormData> = async (data) => {
     try {

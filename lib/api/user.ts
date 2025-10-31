@@ -104,11 +104,11 @@ export async function getUserProjects(userId: string) {
     .from('user_projects')
     .select(
       `id,
-        period_from,
-        period_to,
-        project_name,
-        details,
-        skills`,
+      period_from,
+      period_to,
+      project_name,
+      details,
+      skills`,
     )
     .eq('user_id', userId)
     .order('period_from', { ascending: false })

@@ -58,20 +58,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const handleClick = (
       event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     ) => {
-      // type="submit" 以外のボタンだけ、二度押し防止
-      if (type !== 'submit' && isClicked) {
+      // 二度押し防止
+      if (isClicked) {
         event.preventDefault();
         return;
       }
 
       setIsClicked(true);
-      setTimeout(() => {
-        setIsClicked(false);
-      }, 1000);
+      setTimeout(() => setIsClicked(false), 1000);
 
-      if (onClick) {
-        onClick(event);
-      }
+      if (onClick) onClick(event);
     };
 
     const Comp = asChild ? Slot : 'button';

@@ -8,13 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skill } from '@/types/master';
 import { UserProject } from '@/types/user';
-import { mutate } from 'swr';
 import { Trash2 } from 'lucide-react';
 import { useFetch } from '@/lib/fetch.client';
 import { MypageContainer } from '@/components/MypageContainer';
 import { SkillSelector } from '@/components/SkillSelector';
 import { dateFormat } from '@/lib/utils';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { Label } from '@/components/ui/label';
 
 // -----------------------------
 // ✅ Zod schema
@@ -76,7 +76,7 @@ function ProjectFormCard({
   onDeleted,
 }: {
   project: ProjectForm;
-  onSaved: () => void;
+  onSaved: (values: ProjectForm) => void;
   onDeleted: () => void;
 }) {
   const form = useForm<ProjectForm>({
@@ -84,7 +84,7 @@ function ProjectFormCard({
     defaultValues: project,
   });
 
-  const { register, handleSubmit, setValue, watch } = form;
+  const { register, handleSubmit, setValue, watch, reset } = form;
   const skills = watch('skills');
 
   // 保存（1件ずつ）
@@ -101,9 +101,21 @@ function ProjectFormCard({
         }),
       });
       if (!response.ok) throw new Error('Failed to save');
-      mutate('/api/admin/userProjects');
       alert('保存しました');
-      onSaved();
+      const savedProject = (await response.json()) as UserProject;
+      const _project: ProjectForm = {
+        ...savedProject,
+        period_from: dateFormat(savedProject.period_from, 'yyyy-MM'),
+        period_to: savedProject.period_to
+          ? dateFormat(savedProject.period_to, 'yyyy-MM')
+          : undefined,
+        skills: values.skills,
+      };
+
+      onSaved(_project);
+      if (isNew) {
+        reset();
+      }
     } catch (error) {
       console.error(error);
       alert('保存に失敗しました');
@@ -121,7 +133,6 @@ function ProjectFormCard({
         body: JSON.stringify({ id: project.id }),
       });
       if (!response.ok) throw new Error('Failed to delete');
-      mutate('/api/admin/userProjects');
       alert('削除しました');
       onDeleted();
     } catch (error) {
@@ -136,14 +147,14 @@ function ProjectFormCard({
       className="space-y-4 rounded-lg border p-4"
     >
       <div className="flex w-1/2 items-center justify-around gap-2">
-        <div className="relative">
+        <div className="space-y-2">
           <Input
             type="month"
             placeholder="開始年月 (YYYY-MM)"
             {...register('period_from')}
           />
           {form.formState.errors.period_from && (
-            <p className="absolute text-xs text-red-500">
+            <p className="text-xs text-red-500">
               {form.formState.errors.period_from.message}
             </p>
           )}
@@ -155,7 +166,7 @@ function ProjectFormCard({
           {...register('period_to')}
         />
       </div>
-      <div className="relative">
+      <div className="space-y-2">
         <Input placeholder="プロジェクト名" {...register('project_name')} />
         {form.formState.errors.project_name && (
           <p className="text-xs text-red-500">
@@ -172,13 +183,14 @@ function ProjectFormCard({
           )
         }
       />
-
-      <Textarea placeholder="詳細" {...register('details')} />
-      {form.formState.errors.details && (
-        <p className="text-xs text-red-500">
-          {form.formState.errors.details.message}
-        </p>
-      )}
+      <div className="space-y-2">
+        <Textarea placeholder="詳細" {...register('details')} />
+        {form.formState.errors.details && (
+          <p className="text-xs text-red-500">
+            {form.formState.errors.details.message}
+          </p>
+        )}
+      </div>
 
       <div className="flex justify-end gap-2">
         <Button type="submit">{project.id ? '更新' : '追加'}</Button>
@@ -197,11 +209,21 @@ function ProjectFormCard({
 // -----------------------------
 export default function ProjectsEditPage() {
   const { data: userProjects, isLoading } = useFetch<
-    (UserProject & { skills: Skill[] })[]
+    (Omit<UserProject, 'skills'> & { skills: Skill[] })[]
   >('/api/admin/userProjects');
-
+  const initialized = useRef(false);
   const form = useForm<{ projects: ProjectForm[] }>({
-    defaultValues: { projects: [] },
+    defaultValues: {
+      projects: [
+        {
+          period_from: '',
+          period_to: '',
+          project_name: '',
+          details: '',
+          skills: [],
+        },
+      ],
+    },
   });
   const { replace, remove } = useFieldArray({
     control: form.control,
@@ -210,7 +232,7 @@ export default function ProjectsEditPage() {
 
   // 初期ロード時にセット
   useEffect(() => {
-    if (userProjects) {
+    if (userProjects && !initialized.current) {
       replace([
         {
           period_from: '',
@@ -221,36 +243,62 @@ export default function ProjectsEditPage() {
         },
         ...userProjects.map((p) => ({
           ...p,
+          skills: p.skills.map((s) => ({ id: s.id, name: s.name })),
           period_from: dateFormat(p.period_from, 'yyyy-MM'),
           period_to: p.period_to
             ? dateFormat(p.period_to, 'yyyy-MM')
             : undefined,
         })),
       ]);
-    } else {
-      replace([
-        {
-          period_from: '',
-          period_to: '',
-          project_name: '',
-          details: '',
-          skills: [],
-        },
-      ]);
+      initialized.current = true;
     }
   }, [userProjects, replace]);
 
+  const savedComplete = (project: ProjectForm) => {
+    let projects = form.getValues('projects').filter(({ id }) => !!id) ?? [];
+    const index = projects.findIndex((p) => p.id === project.id);
+
+    // 更新 or 追加
+    if (index === -1) {
+      projects.push(project);
+    } else {
+      projects[index] = project;
+    }
+
+    // ソート（period_from → period_to の降順）
+    projects = projects.sort((a, b) => {
+      if (a.period_from !== b.period_from)
+        return a.period_from < b.period_from ? 1 : -1;
+      return (a.period_to ?? '') < (b.period_to ?? '') ? 1 : -1;
+    });
+
+    // 反映
+    replace([
+      {
+        period_from: '',
+        period_to: '',
+        project_name: '',
+        details: '',
+        skills: [],
+      },
+      ...projects,
+    ]);
+  };
+
   return (
     <MypageContainer loading={isLoading} title="職務経歴編集">
-      <div className="max-w-2xl space-y-6">
-        {form.watch('projects').map((p, i) => (
-          <ProjectFormCard
-            key={p.id ?? `new-${i}`}
-            project={p}
-            onSaved={() => mutate('/api/admin/userProjects')}
-            onDeleted={() => remove(i)}
-          />
-        ))}
+      <div className="max-w-2xl">
+        <Label htmlFor="projects">プロジェクト</Label>
+        <div className="space-y-6">
+          {form.watch('projects').map((p, i) => (
+            <ProjectFormCard
+              key={p.id ?? `new-${i}`}
+              project={p}
+              onSaved={(val) => savedComplete(val)}
+              onDeleted={() => remove(i)}
+            />
+          ))}
+        </div>
       </div>
     </MypageContainer>
   );

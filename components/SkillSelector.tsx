@@ -94,8 +94,7 @@ export function SkillSelector({
   onSort(skills: Skill[]): void;
   className?: string;
 }) {
-  const { data: allSkills, isLoading: isLoadingAllSkills } =
-    useFetch<Skill[]>('/api/skills');
+  const { data: allSkills } = useFetch<Skill[]>('/api/skills');
   const [open, setOpen] = useState(false);
 
   const availableSkills =
