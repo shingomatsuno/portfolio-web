@@ -267,9 +267,16 @@ export default function ProjectsEditPage() {
 
     // ソート（period_from → period_to の降順）
     projects = projects.sort((a, b) => {
-      if (a.period_from !== b.period_from)
+      // period_from DESC
+      if (a.period_from !== b.period_from) {
         return a.period_from < b.period_from ? 1 : -1;
-      return (a.period_to ?? '') < (b.period_to ?? '') ? 1 : -1;
+      }
+
+      // period_to DESC
+      if (a.period_to === b.period_to) return 0;
+      if (!a.period_to) return 1; // null は最後
+      if (!b.period_to) return -1;
+      return a.period_to < b.period_to ? 1 : -1;
     });
 
     // 反映
