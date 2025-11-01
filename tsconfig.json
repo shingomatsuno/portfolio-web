@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "jsx": "preserve", // ✅ これが重要！
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowJs": true,
     "esModuleInterop": true,
     "target": "esnext",

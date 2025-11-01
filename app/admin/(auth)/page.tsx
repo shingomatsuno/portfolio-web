@@ -15,7 +15,6 @@ import { Skill } from '@/types/master';
 import { MypageContainer } from '@/components/MypageContainer';
 import { UserPr, UserProject, Profile, UserFreeText } from '@/types/user';
 import { SkillChip } from '@/components/SkillChip';
-import MDEditor from '@uiw/react-md-editor';
 import { dateFormat } from '@/lib/utils';
 import { useFetch } from '@/lib/fetch.client';
 
@@ -139,10 +138,11 @@ export default function AdminPage() {
                 <Pencil size={14} /> 編集
               </Link>
               <h3 className="mb-4 text-lg font-semibold">フリーテキスト</h3>
-              <CardContent className="flex flex-col gap-2 p-0">
-                <MDEditor.Markdown
-                  source={freeText?.free_text}
-                  style={{ whiteSpace: 'pre-wrap' }}
+              <CardContent className="flex flex-col gap-2 p-0 text-center">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: freeText?.free_text || '',
+                  }}
                 />
               </CardContent>
             </Card>

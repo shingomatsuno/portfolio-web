@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { Profile, UserProject } from '@/types/user';
 import { Skill } from '@/types/master';
-import { sanitize } from 'isomorphic-dompurify';
+import isd from 'isomorphic-dompurify';
 
 export async function getProfile({
   userId,
@@ -91,7 +91,7 @@ export async function getUserFreeText(userId: string) {
   return {
     data: {
       ...data,
-      free_text: sanitize(data.free_text),
+      free_text: isd.sanitize(data.free_text),
     },
     error,
   };

@@ -26,7 +26,7 @@ import {
   getUserSkills,
 } from '@/lib/api/user';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import MdPreview from './MdPreview';
+
 import { dateFormat } from '@/lib/utils';
 import Link from 'next/link';
 import { AnimateText } from './ui/animated-text';
@@ -263,8 +263,8 @@ export const PortfolioPage = async ({ username }: { username: string }) => {
       </section>
       {freeText && (
         <section className="flex min-h-screen items-center justify-center px-6 py-20">
-          <div className="w-full max-w-2xl text-center">
-            <MdPreview value={freeText.free_text} />
+          <div className="tiptap w-full max-w-5xl text-center">
+            <div dangerouslySetInnerHTML={{ __html: freeText.free_text }} />
           </div>
         </section>
       )}

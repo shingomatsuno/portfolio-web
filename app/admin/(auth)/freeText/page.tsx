@@ -8,10 +8,9 @@ import { UserFreeText } from '@/types/user';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import MDEditor from '@uiw/react-md-editor';
 
 import * as z from 'zod';
-import MdPreview from '@/components/MdPreview';
+import { Editor } from '@/components/Editor';
 const ftSchema = z.object({
   free_text: z.string().max(5000, '5000文字以内で入力してください').optional(),
 });
@@ -62,13 +61,9 @@ export default function PrEditPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
           <div className="space-y-2">
             <Label htmlFor="free_text">フリーテキスト</Label>
-            <div className="rounded-md border p-4">
-              <MdPreview value={value} />
-            </div>
-            <MDEditor
-              value={value}
+            <Editor
+              defaultValue={userFreeText?.free_text}
               onChange={(val) => setValue('free_text', val)}
-              preview="edit"
             />
             {errors.free_text && (
               <p className="text-xs text-red-500">{errors.free_text.message}</p>
