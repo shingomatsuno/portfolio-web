@@ -219,7 +219,9 @@ export const PortfolioPage = async ({ username }: { username: string }) => {
                   className="border-2 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
                 >
                   <CardHeader>
-                    <CardTitle>{project.project_name}</CardTitle>
+                    <CardTitle className="text-xl">
+                      {project.project_name}
+                    </CardTitle>
                     <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
                       {dateFormat(project.period_from, 'yyyy/MM')}
                       {project.period_to

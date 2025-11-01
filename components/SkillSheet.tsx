@@ -160,7 +160,7 @@ export function SkillSheet({
                           {dateFormat(p.period_from, 'yyyy/MM')} ~{' '}
                           {p.period_to
                             ? dateFormat(p.period_to, 'yyyy/MM')
-                            : ''}
+                            : '現在'}
                         </td>
                         <td colSpan={2} className="border border-black">
                           {p.project_name}
