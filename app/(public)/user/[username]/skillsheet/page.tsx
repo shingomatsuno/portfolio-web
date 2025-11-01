@@ -19,7 +19,13 @@ export async function generateMetadata({ params }: Props) {
     .eq('username', username)
     .single<Profile>();
 
-  return { title: profile?.name + 'のスキルシート' };
+  return {
+    title: profile?.name + 'のスキルシート',
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
 }
 
 export default async function Page({ params }: Props) {

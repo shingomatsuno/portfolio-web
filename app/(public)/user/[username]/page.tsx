@@ -17,7 +17,13 @@ export async function generateMetadata({ params }: Props) {
     .eq('username', username)
     .single<Profile>();
 
-  return { title: profile?.name + 'のポートフォリオ' };
+  return {
+    title: profile?.name + 'のポートフォリオ',
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
 }
 
 export default async function Page({ params }: Props) {

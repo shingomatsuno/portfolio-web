@@ -13,10 +13,12 @@ export async function generateMetadata() {
     .eq('username', username)
     .single<Profile>();
 
-  const name = profile?.name ?? 'ポートフォリオ';
-  const bio =
-    profile?.bio ??
-    'Webエンジニア・クリエイターとしてのポートフォリオサイトです。これまでの制作物や経歴を紹介しています。';
+  const name = profile?.name ?? '';
+  const bio = `${profile?.name}のポートフォリオへようこそ!!
+このサイトはNext.js、supabase、tailwindcss、vercelといったモダンなキラキラ技術をふんだんに活用してます。
+さらには最近流行りのAIによる実装も取り入れてます。
+このポートフォリオを見てもらうとちょっとだけ${profile?.name}(私)のことが分かるかもしれません。
+`;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const title = `${name}のポートフォリオ`;
