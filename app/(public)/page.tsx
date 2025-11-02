@@ -61,6 +61,9 @@ export async function generateMetadata() {
     alternates: {
       canonical: siteUrl,
     },
+    other: {
+      'google-site-verification': process.env.GOOGLE_SITE_VERIFICATION,
+    },
   };
 }
 
