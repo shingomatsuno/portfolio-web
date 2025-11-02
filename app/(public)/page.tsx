@@ -23,7 +23,7 @@ export async function generateMetadata() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const title = `${name}のポートフォリオ`;
   const description = bio;
-  const image = `${siteUrl}/ogp-default.jpg`;
+  const image = `${siteUrl}/ogp-default.png`;
 
   return {
     title,
