@@ -1,7 +1,4 @@
-'use client';
-
-import DOMPurify from 'isomorphic-dompurify';
-
+import sanitizeHtml from 'sanitize-html';
 export function SafeHTML({ html }: { html: string }) {
-  return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />;
+  return <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />;
 }
