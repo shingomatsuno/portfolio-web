@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { UserFreeText } from '@/types/user';
 import { getUserFreeText } from '@/lib/api/user';
-import isd from 'isomorphic-dompurify';
 
 export async function GET() {
   const supabase = await createClient();
@@ -38,7 +37,7 @@ export async function PUT(request: Request) {
   if (userPr?.id) {
     const { data, error } = await supabase
       .from('user_free_texts')
-      .update({ free_text: isd.sanitize(params.free_text) })
+      .update({ free_text: params.free_text })
       .eq('id', userPr.id)
       .select('id,free_text')
       .single();
@@ -54,7 +53,7 @@ export async function PUT(request: Request) {
   } else {
     const { data, error } = await supabase
       .from('user_free_texts')
-      .insert({ free_text: isd.sanitize(params.free_text), user_id: user?.id })
+      .insert({ free_text: params.free_text, user_id: user?.id })
       .select('id,free_text')
       .single();
     if (error) {

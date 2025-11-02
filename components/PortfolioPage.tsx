@@ -31,6 +31,7 @@ import { dateFormat } from '@/lib/utils';
 import Link from 'next/link';
 import { AnimateText } from './ui/animated-text';
 import Image from 'next/image';
+import { SafeHTML } from './SafeHTML';
 
 export const PortfolioPage = async ({ username }: { username: string }) => {
   const { data: profile } = await getProfile({ username });
@@ -264,7 +265,7 @@ export const PortfolioPage = async ({ username }: { username: string }) => {
       {freeText && (
         <section className="flex min-h-screen items-center justify-center px-6 py-20">
           <div className="tiptap w-full max-w-5xl text-center">
-            <div dangerouslySetInnerHTML={{ __html: freeText.free_text }} />
+            <SafeHTML html={freeText.free_text} />
           </div>
         </section>
       )}

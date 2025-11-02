@@ -17,6 +17,7 @@ import { UserPr, UserProject, Profile, UserFreeText } from '@/types/user';
 import { SkillChip } from '@/components/SkillChip';
 import { dateFormat } from '@/lib/utils';
 import { useFetch } from '@/lib/fetch.client';
+import { SafeHTML } from '@/components/SafeHTML';
 
 export default function AdminPage() {
   const { data: profile, isLoading: profileLoading } =
@@ -139,11 +140,7 @@ export default function AdminPage() {
               </Link>
               <h3 className="mb-4 text-lg font-semibold">フリーテキスト</h3>
               <CardContent className="flex flex-col gap-2 p-0 text-center">
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: freeText?.free_text || '',
-                  }}
-                />
+                <SafeHTML html={freeText?.free_text || ''} />
               </CardContent>
             </Card>
           </div>
