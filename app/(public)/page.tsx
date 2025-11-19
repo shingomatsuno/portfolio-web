@@ -2,7 +2,7 @@ import { PortfolioPage } from '@/components/PortfolioPage';
 import { createClient } from '@/lib/supabase/server';
 import { Profile } from '@/types/user';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 600;
 
 export async function generateMetadata() {
   const username = process.env.DEFAULT_USERNAME;
