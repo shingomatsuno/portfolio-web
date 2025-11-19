@@ -21,7 +21,7 @@
 
 ### アーキテクチャ
 
-- **メイン画面**: SSR（Server-Side Rendering）で高速表示
+- **メイン画面**: ISR（Incremental Static Regeneration）で高速表示
 - **管理画面**: SPA（Single Page Application）で操作性重視
 
 ---
