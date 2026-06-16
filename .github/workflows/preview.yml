@@ -34,7 +34,13 @@ jobs:
       - name: Vercelへのプレビューデプロイ
         id: deploy
         run: |
-          DEPLOY_JSON=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --json)
+          DEPLOY_JSON=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} \
+            --meta githubCommitOrg=${{ github.repository_owner }} \
+            --meta githubCommitRepo=${{ github.event.repository.name }} \
+            --meta githubCommitRef=${{ github.head_ref || github.ref_name }} \
+            --meta githubCommitSha=${{ github.event.pull_request.head.sha || github.sha }} \
+            --meta githubCommitAuthorName="${{ github.actor }}" \
+            --json)
           DEPLOY_URL=$(echo "$DEPLOY_JSON" | jq -r '.url')
           ALIAS_URL=$(echo "$DEPLOY_JSON" | jq -r '.alias[0]')
           echo "url=https://$DEPLOY_URL" >> $GITHUB_OUTPUT
