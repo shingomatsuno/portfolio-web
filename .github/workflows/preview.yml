@@ -61,41 +61,18 @@ jobs:
             const scope = 'shingomatsunos-projects';
             const branchUrl = `https://${projectRep}-git-${normalizedBranch}-${scope}.vercel.app`;
 
-            const commentBody = [
-              '### 🚀 Vercel プレビューデプロイ準備完了！',
-              '',
-              '| 項目 | URL |',
-              '| :--- | :--- |',
-              `| **プレビューURL (毎回変更)** | [${rawUrl}](${rawUrl}) |`,
-              `| **ブランチ固定URL (不変)** | [${branchUrl}](${branchUrl}) |`,
-              '',
-              '* コミット: ${{ github.event.pull_request.head.sha }}'
-            ].join('\n');
-
-            const { data: comments } = await github.rest.issues.listComments({
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              body: [
+                '### 🚀 Vercel プレビューデプロイ準備完了！',
+                '',
+                '| 項目 | URL |',
+                '| :--- | :--- |',
+                `| **プレビューURL (毎回変更)** | [${rawUrl}](${rawUrl}) |`,
+                `| **ブランチ固定URL (不変)** | [${branchUrl}](${branchUrl}) |`,
+                '',
+                '* コミット: ${{ github.event.pull_request.head.sha }}'
+              ].join('\n')
             });
-
-            // 過去に投稿したデプロイコメントがあれば更新、なければ新規作成
-            const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && comment.body.includes('Vercel プレビューデプロイ準備完了')
-            );
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: commentBody
-              });
-            } else {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: commentBody
-              });
-            }
-
