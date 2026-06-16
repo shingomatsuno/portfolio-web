@@ -34,16 +34,23 @@ jobs:
       - name: Vercelへのプレビューデプロイ
         id: deploy
         run: |
-          DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          DEPLOY_JSON=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --json)
+          DEPLOY_URL=$(echo "$DEPLOY_JSON" | jq -r '.url')
+          ALIAS_URL=$(echo "$DEPLOY_JSON" | jq -r '.alias[0]')
+          echo "url=https://$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "alias=https://$ALIAS_URL" >> $GITHUB_OUTPUT
 
       - name: PRにプレビューURLをコメント
         uses: actions/github-script@v6
         with:
           script: |
+            const deployUrl = "${{ steps.deploy.outputs.url }}";
+            const aliasUrl = "${{ steps.deploy.outputs.alias }}";
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Vercel プレビューデプロイが完了しました！\n\n🔗 プレビューURL: [${{ steps.deploy.outputs.url }}](${{ steps.deploy.outputs.url }})`
+              body: `🚀 Vercel プレビューデプロイが完了しました！\n\n` +
+                    `* 🔗 **個別デプロイ（毎回変わる）**: ${deployUrl}\n` +
+                    `* 🔄 **ブランチの最新（固定URL）**: ${aliasUrl}`
             })
