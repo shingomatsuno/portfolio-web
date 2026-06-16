@@ -49,16 +49,29 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const rawUrl = '${{ steps.deploy.outputs.preview-url }}';
-            const projectRep = 'portfolio-web';
+            const projectRep = '${{ github.event.repository.name }}';
             
-            // ブランチ名の中の英数字以外の文字（/, _, など）をハイフンに置き換え、すべて小文字にする
+            // プレビューURLからホスト名部分を抽出
+            const host = rawUrl.replace(/^https?:\/\//, '').replace('.vercel.app', '');
+            
+            // ホスト名からプロジェクト名とハッシュを除去してスコープ名を自動抽出
+            let remaining = host;
+            if (host.startsWith(projectRep + '-')) {
+              remaining = host.substring(projectRep.length + 1);
+            } else {
+              const firstHyphen = host.indexOf('-');
+              remaining = host.substring(firstHyphen + 1);
+            }
+            const firstHyphenInRemaining = remaining.indexOf('-');
+            const scope = remaining.substring(firstHyphenInRemaining + 1);
+
+            // ブランチ名の中の英数字以外の文字をハイフンに置き換え、すべて小文字にする
             const branchName = '${{ github.event.pull_request.head.ref }}';
             const normalizedBranch = branchName
               .replace(/[^a-zA-Z0-9]/g, '-')
               .toLowerCase()
               .replace(/-+/g, '-'); // 連続するハイフンを1つにまとめる
               
-            const scope = 'shingomatsunos-projects';
             const branchUrl = `https://${projectRep}-git-${normalizedBranch}-${scope}.vercel.app`;
 
             await github.rest.issues.createComment({
