@@ -5,13 +5,13 @@ env:
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 on:
-  push:
-    branches-ignore:
-      - main # mainブランチ以外のプッシュでトリガー
+  pull_request: # プルリクエスト作成・更新時にトリガー
 
 jobs:
   Deploy-Preview:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # PRにコメントを追加する権限
     steps:
       - name: コードのチェックアウト
         uses: actions/checkout@v3
@@ -32,4 +32,18 @@ jobs:
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Vercelへのプレビューデプロイ
-        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+        id: deploy
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+
+      - name: PRにプレビューURLをコメント
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 Vercel プレビューデプロイが完了しました！\n\n🔗 プレビューURL: [${{ steps.deploy.outputs.url }}](${{ steps.deploy.outputs.url }})`
+            })
