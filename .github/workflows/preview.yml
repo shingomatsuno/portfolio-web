@@ -1,0 +1,101 @@
+name: Vercel Preview Deployment
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+on:
+  pull_request: # プルリクエスト作成・更新時にトリガー
+
+jobs:
+  Deploy-Preview:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # PRにコメントを追加する権限
+    steps:
+      - name: コードのチェックアウト
+        uses: actions/checkout@v3
+        with:
+          # PR元の最新コミットを直接チェックアウトしてコミットメッセージを正しくします
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Node.jsのセットアップ
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm # npmのキャッシュを有効化
+
+      - name: Vercel CLIのインストール
+        run: npm install -g vercel@latest
+
+      - name: Vercel環境設定の取得 (Pull)
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Vercelでのビルド
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Vercelへのデプロイ
+        id: deploy
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} \
+            --meta githubCommitRef=${{ github.event.pull_request.head.ref }} \
+            --meta githubCommitSha=${{ github.event.pull_request.head.sha }} \
+            --meta githubDeployment=1)
+          echo "preview-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+
+      - name: PRにURLをコメント投稿
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Vercel CLIのデプロイ結果として得られた、毎回変わる一意のプレビューURL（例: https://portfolio-web-a1b2c3d4-scope.vercel.app）
+            const rawUrl = '${{ steps.deploy.outputs.preview-url }}';
+            // このGitHubリポジトリの名前（例: portfolio-web）。Vercelのプロジェクト名と一致する想定
+            const projectRep = '${{ github.event.repository.name }}';
+            
+            // 【Vercelの組織名/ユーザー名（スコープ）を自動で取り出す処理】
+            // プレビューURLから「https://」と「.vercel.app」を除去し、名前の部分（例: portfolio-web-a1b2c3d4-scope）だけを抽出します。
+            const host = rawUrl.replace(/^https?:\/\//, '').replace('.vercel.app', '');
+            
+            // 抽出した名前から「プロジェクト名-」を取り除き、「ハッシュ-スコープ名」の状態にします。
+            let remaining = host;
+            if (host.startsWith(projectRep + '-')) {
+              remaining = host.substring(projectRep.length + 1); // 例: "a1b2c3d4-scope"
+            } else {
+              // プロジェクト名とリポジトリ名が完全に一致しない場合は、最初のハイフンの後から取得します。
+              const firstHyphen = host.indexOf('-');
+              remaining = host.substring(firstHyphen + 1);
+            }
+            
+            // 「ハッシュ-スコープ名」から最初のハイフンを探し、それ以降の「スコープ名」を動的に取得します。
+            // これにより、別のVercelアカウントやチームで利用する際にもコードを書き換える必要がなくなります。
+            const firstHyphenInRemaining = remaining.indexOf('-');
+            const scope = remaining.substring(firstHyphenInRemaining + 1); // 例: "scope"
+
+            // 【Gitブランチ名をドメイン名として使える形式に変換する処理】
+            // Vercelのブランチ固有エイリアス（固定URL）は、ブランチ名のスラッシュや記号がハイフンに変換されます。
+            const branchName = '${{ github.event.pull_request.head.ref }}';
+            const normalizedBranch = branchName
+              .replace(/[^a-zA-Z0-9]/g, '-') // 英数字以外の記号（/ や _ など）をすべてハイフンに置換
+              .toLowerCase()                // すべて小文字に統一
+              .replace(/-+/g, '-');         // 連続するハイフン（例: --）を1つのハイフンに統合
+              
+            // 【ブランチ固有の固定URL（エイリアス）の組み立て】
+            // Vercelの標準的な命名規則（https://プロジェクト名-git-ブランチ名-スコープ名.vercel.app）に沿って組み立てます。
+            const branchUrl = `https://${projectRep}-git-${normalizedBranch}-${scope}.vercel.app`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: [
+                '### 🚀 Vercel プレビューデプロイ準備完了！',
+                '',
+                '| 項目 | URL |',
+                '| :--- | :--- |',
+                `| **プレビューURL (毎回変更)** | [${rawUrl}](${rawUrl}) |`,
+                `| **ブランチ固定URL (不変)** | [${branchUrl}](${branchUrl}) |`,
+                '',
+                '* コミット: ${{ github.event.pull_request.head.sha }}'
+              ].join('\n')
+            });
