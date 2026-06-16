@@ -22,12 +22,14 @@ jobs:
           node-version: 20
           cache: npm # npmのキャッシュを有効化
 
-      - name: Vercel本番デプロイ
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod' # 本番デプロイを指定
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          vercel-version: latest
+      - name: Vercel CLIのインストール
+        run: npm install -g vercel@latest
+
+      - name: Vercel環境設定の取得 (Pull)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Vercelでのビルド
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Vercelへのデプロイ
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
