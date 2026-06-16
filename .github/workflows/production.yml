@@ -30,3 +30,4 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod' # 本番デプロイを指定
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-version: latest

@@ -33,3 +33,4 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-comment: true # PRにプレビューURLを自動でコメントします
+          vercel-version: latest
