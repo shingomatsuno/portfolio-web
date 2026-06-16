@@ -1,0 +1,35 @@
+name: Vercel Preview Deployment
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+on:
+  push:
+    branches-ignore:
+      - main # mainブランチ以外のプッシュでトリガー
+
+jobs:
+  Deploy-Preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: コードのチェックアウト
+        uses: actions/checkout@v3
+
+      - name: Node.jsのセットアップ
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm # npmのキャッシュを有効化
+
+      - name: Vercel CLIのインストール
+        run: npm install --global vercel@latest
+
+      - name: Vercelの環境情報の取得
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: プロジェクトのビルド
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Vercelへのプレビューデプロイ
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
