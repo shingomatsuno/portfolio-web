@@ -48,30 +48,40 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // Vercel CLIのデプロイ結果として得られた、毎回変わる一意のプレビューURL（例: https://portfolio-web-a1b2c3d4-scope.vercel.app）
             const rawUrl = '${{ steps.deploy.outputs.preview-url }}';
+            // このGitHubリポジトリの名前（例: portfolio-web）。Vercelのプロジェクト名と一致する想定
             const projectRep = '${{ github.event.repository.name }}';
             
-            // プレビューURLからホスト名部分を抽出
+            // 【Vercelの組織名/ユーザー名（スコープ）を自動で取り出す処理】
+            // プレビューURLから「https://」と「.vercel.app」を除去し、名前の部分（例: portfolio-web-a1b2c3d4-scope）だけを抽出します。
             const host = rawUrl.replace(/^https?:\/\//, '').replace('.vercel.app', '');
             
-            // ホスト名からプロジェクト名とハッシュを除去してスコープ名を自動抽出
+            // 抽出した名前から「プロジェクト名-」を取り除き、「ハッシュ-スコープ名」の状態にします。
             let remaining = host;
             if (host.startsWith(projectRep + '-')) {
-              remaining = host.substring(projectRep.length + 1);
+              remaining = host.substring(projectRep.length + 1); // 例: "a1b2c3d4-scope"
             } else {
+              // プロジェクト名とリポジトリ名が完全に一致しない場合は、最初のハイフンの後から取得します。
               const firstHyphen = host.indexOf('-');
               remaining = host.substring(firstHyphen + 1);
             }
+            
+            // 「ハッシュ-スコープ名」から最初のハイフンを探し、それ以降の「スコープ名」を動的に取得します。
+            // これにより、別のVercelアカウントやチームで利用する際にもコードを書き換える必要がなくなります。
             const firstHyphenInRemaining = remaining.indexOf('-');
-            const scope = remaining.substring(firstHyphenInRemaining + 1);
+            const scope = remaining.substring(firstHyphenInRemaining + 1); // 例: "scope"
 
-            // ブランチ名の中の英数字以外の文字をハイフンに置き換え、すべて小文字にする
+            // 【Gitブランチ名をドメイン名として使える形式に変換する処理】
+            // Vercelのブランチ固有エイリアス（固定URL）は、ブランチ名のスラッシュや記号がハイフンに変換されます。
             const branchName = '${{ github.event.pull_request.head.ref }}';
             const normalizedBranch = branchName
-              .replace(/[^a-zA-Z0-9]/g, '-')
-              .toLowerCase()
-              .replace(/-+/g, '-'); // 連続するハイフンを1つにまとめる
+              .replace(/[^a-zA-Z0-9]/g, '-') // 英数字以外の記号（/ や _ など）をすべてハイフンに置換
+              .toLowerCase()                // すべて小文字に統一
+              .replace(/-+/g, '-');         // 連続するハイフン（例: --）を1つのハイフンに統合
               
+            // 【ブランチ固有の固定URL（エイリアス）の組み立て】
+            // Vercelの標準的な命名規則（https://プロジェクト名-git-ブランチ名-スコープ名.vercel.app）に沿って組み立てます。
             const branchUrl = `https://${projectRep}-git-${normalizedBranch}-${scope}.vercel.app`;
 
             await github.rest.issues.createComment({
